@@ -118,6 +118,11 @@ class QBWC::ActiveRecord::Job < QBWC::Job
     QbwcJob.where(company: company).order(:id).map {|ar_job| ar_job.to_qbwc_job}
   end
   
+  def self.next_job_for_company(company)
+    j = QbwcJob.where(company: company).order(:id).first
+    j && j.to_qbwc_job
+  end
+
   def self.clear_jobs
     QbwcJob.delete_all
   end

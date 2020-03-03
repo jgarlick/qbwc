@@ -119,7 +119,7 @@ QWC
         ticket = QBWC.storage_module::Session.new(username, company_file_path).ticket
         session = get_session(ticket)
 
-        if !QBWC.pending_jobs(company_file_path, session).present?
+        if QBWC.pending_job_count(company_file_path) == 0
           QBWC.logger.info "Authentication of user '#{username}' succeeded, but no jobs pending for '#{company_file_path}'."
           company_file_path = AUTHENTICATE_NO_WORK
         else

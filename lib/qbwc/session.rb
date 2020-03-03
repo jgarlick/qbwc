@@ -16,7 +16,6 @@ class QBWC::Session
     @error = nil
     @progress = 0
     @iterator_id = nil
-    @initial_job_count = pending_jobs.length
 
     @ticket = ticket || Digest::SHA1.hexdigest("#{Rails.application.config.try(:secret_key_base) || Rails.application.config.try(:secret_token)}#{SecureRandom.uuid}")
 
@@ -47,10 +46,9 @@ class QBWC::Session
       return nil
     end
     until (request = current_job.next_request(self)) do
-      pending_jobs.shift
       reset(true) or break
     end
-    jobs_completed = @initial_job_count - pending_jobs.length
+    jobs_completed = @initial_job_count - QBWC.pending_job_count(@company)
     self.progress = ((jobs_completed.to_f  / @initial_job_count.to_f ) * 100).to_i
     complete_with_success if finished?
     request
@@ -116,13 +114,13 @@ class QBWC::Session
   private
 
   def reset(reset_job = false)
-    self.current_job = pending_jobs.first
+    self.current_job = next_job
     self.current_job.reset if reset_job && self.current_job
     return self.current_job
   end
 
-  def pending_jobs
-    @pending_jobs ||= QBWC.pending_jobs(@company, self)
+  def next_job
+    QBWC::ActiveRecord::Job.next_job_for_company(@company)
   end
 
   def complete_with_success
