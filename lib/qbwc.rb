@@ -80,6 +80,10 @@ module QBWC
       storage_module::Job.list_jobs
     end
 
+    def jobs_for_company(company)
+      storage_module::Job.jobs_for_company(company)
+    end
+
     def add_job(name, enabled = true, company = nil, klass = QBWC::Worker, requests = nil, data = nil)
       storage_module::Job.add_job(name, enabled, company, klass, requests, data)
     end
@@ -93,10 +97,14 @@ module QBWC
       storage_module::Job.delete_job_with_name(name)
     end
 
+    def pending_job_count(company)
+      storage_module::Job::QbwcJob.where(company: company).count
+    end
+
     def pending_jobs(company, session = QBWC::Session.get)
-      js = jobs
-      QBWC.logger.info "#{js.length} jobs exist, checking for pending jobs for company '#{company}'."
-      storage_module::Job.sort_in_time_order(js.select {|job| job.company == company && job.pending?(session)})
+      pending_job_count = pending_job_count(company)
+      QBWC.logger.info "#{pending_job_count} jobs exist for company '#{company}'"
+      jobs_for_company(company)
     end
     
     def set_session_initializer(&block)
